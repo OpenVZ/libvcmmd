@@ -62,26 +62,13 @@ typedef enum {
 	VCMMD_VE_CONFIG_GUARANTEE,
 
 	/*
-	 * VE memory throttle limit, in bytes.
+	 * VE memory limit, in bytes.
 	 *
-	 * Maximal memory allocation actually available to a VE. If a VE's
-	 * memory usage goes over the limit, it will be throttled and put under
-	 * heavy reclaim pressure. Going over the limit will never invoke OOM
-	 * killer and under extreme conditions the limit may be breached.
+	 * Maximal size of host memory that can be used by a VE.
 	 *
 	 * Must be >= guarantee.
 	 */
 	VCMMD_VE_CONFIG_LIMIT,
-
-	/*
-	 * VE memory hard limit, in bytes.
-	 *
-	 * This parameter defines the memory size committed to a VE. It may
-	 * never be breached. Increasing the hard limit implies memory hotplug.
-	 *
-	 * Must be >= limit.
-	 */
-	VCMMD_VE_CONFIG_MAX_LIMIT,
 
 	/*
 	 * VE swap hard limit, in bytes.
