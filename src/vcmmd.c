@@ -18,9 +18,10 @@ char *vcmmd_strerror(int err, char *buf, size_t buflen)
 		"Conflicting VE config parameters",		/* 3 */
 		"VE name already in use",			/* 4 */
 		"VE not registered",				/* 5 */
-		"VE already committed",				/* 6 */
+		"VE already active",				/* 6 */
 		"VE operation failed",				/* 7 */
 		"Unable to meet VE requirements",		/* 8 */
+		"VE not active",				/* 9 */
 	};
 
 	static const char *lib_err_list[] = {
@@ -169,17 +170,22 @@ int vcmmd_register_ve(const char *ve_name, vcmmd_ve_type_t ve_type,
 	return send_msg(msg);
 }
 
-int vcmmd_commit_ve(const char *ve_name)
+int vcmmd_activate_ve(const char *ve_name)
 {
 	DBusMessage *msg;
 	DBusMessageIter args;
 
-	msg = make_msg("CommitVE", &args);
+	msg = make_msg("ActivateVE", &args);
 	if (!msg ||
 	    !append_str(&args, ve_name))
 		return VCMMD_ERROR_NO_MEMORY;
 
 	return send_msg(msg);
+}
+
+int vcmmd_commit_ve(const char *ve_name)
+{
+	return vcmmd_activate_ve(ve_name);
 }
 
 int vcmmd_update_ve(const char *ve_name,
@@ -193,6 +199,19 @@ int vcmmd_update_ve(const char *ve_name,
 	    !append_str(&args, ve_name) ||
 	    !append_config(&args, ve_config) ||
 	    !append_bool(&args, force))
+		return VCMMD_ERROR_NO_MEMORY;
+
+	return send_msg(msg);
+}
+
+int vcmmd_deactivate_ve(const char *ve_name)
+{
+	DBusMessage *msg;
+	DBusMessageIter args;
+
+	msg = make_msg("DeactivateVE", &args);
+	if (!msg ||
+	    !append_str(&args, ve_name))
 		return VCMMD_ERROR_NO_MEMORY;
 
 	return send_msg(msg);

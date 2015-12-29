@@ -22,9 +22,12 @@ enum {
 	VCMMD_ERROR_VE_CONFIG_CONFLICT,				/* 3 */
 	VCMMD_ERROR_VE_NAME_ALREADY_IN_USE,			/* 4 */
 	VCMMD_ERROR_VE_NOT_REGISTERED,				/* 5 */
-	VCMMD_ERROR_VE_ALREADY_COMMITTED,			/* 6 */
+	VCMMD_ERROR_VE_ALREADY_ACTIVE,				/* 6 */
+	VCMMD_ERROR_VE_ALREADY_COMMITTED =
+		VCMMD_ERROR_VE_ALREADY_ACTIVE,
 	VCMMD_ERROR_VE_OPERATION_FAILED,			/* 7 */
 	VCMMD_ERROR_NO_SPACE,					/* 8 */
+	VCMMD_ERROR_VE_NOT_ACTIVE,				/* 9 */
 
 	__VCMMD_SERVICE_ERROR_END,
 
@@ -143,7 +146,7 @@ char *vcmmd_strerror(int err, char *buf, size_t buflen);
  * claimed by the VE and report back. The caller must refrain from starting the
  * VE if VCMMD returns failure. If VCMMD finds that the VE requirements can be
  * met, it will remember the VE and return success, but it will not start
- * tuning the VE's parameters until the VE is committed (see vcmmd_commit_ve).
+ * tuning the VE's parameters until the VE is activated (see vcmmd_activate_ve).
  *
  * The caller may set the @force flag in order to force VCMMD to register a VE
  * even if it cannot meet the VE's requirements.
@@ -162,23 +165,26 @@ int vcmmd_register_ve(const char *ve_name, vcmmd_ve_type_t ve_type,
 		      const struct vcmmd_ve_config *ve_config, bool force);
 
 /*
- * vcmmd_commit_ve: commit VE
+ * vcmmd_activate_ve: activate VE
  * @ve_name: VE name
  *
  * This function notifies VCMMD that a VE which has been previously registered
- * with vcmmd_register_ve has been started. VCMMD may not tune VE's parameters
+ * with vcmmd_register_ve can now be managed. VCMMD may not tune VE's parameters
  * until this function is called. If this function fails, which normally can
- * only happen if VCMMD fails to connect to the VE, the caller should abort VE
- * start and unregister VE with vcmmd_unregister_ve.
+ * only happen if VCMMD fails to connect to the VE, the caller should stop and
+ * unregister VE with vcmmd_unregister_ve.
  *
  * Returns 0 on success, an error code on failure.
  *
  * Error codes:
  *
  *   %VCMMD_ERROR_VE_NOT_REGISTERED
- *   %VCMMD_ERROR_VE_ALREADY_COMMITTED
+ *   %VCMMD_ERROR_VE_ALREADY_ACTIVE
  *   %VCMMD_ERROR_VE_OPERATION_FAILED
  */
+int vcmmd_activate_ve(const char *ve_name);
+
+/* Equivalent to vcmmd_activate_ve. Left for compatibility. */
 int vcmmd_commit_ve(const char *ve_name);
 
 /*
@@ -188,9 +194,9 @@ int vcmmd_commit_ve(const char *ve_name);
  * @force: force VE config update
  *
  * This function requests the VCMMD service to update a VE's configuration. It
- * may be called for any registered VE, no matter committed or not. This
- * function may fail if VCMMD finds that it will not be able to meet the new
- * VE's requirements.
+ * may be called for any registered VE, no matter active or not. This function
+ * may fail if VCMMD finds that it will not be able to meet the new VE's
+ * requirements.
  *
  * The caller may set the @force flag in order to force VCMMD to update a VE
  * configuration even if it cannot meet the VE's requirements.
@@ -206,6 +212,25 @@ int vcmmd_commit_ve(const char *ve_name);
  */
 int vcmmd_update_ve(const char *ve_name,
 		    const struct vcmmd_ve_config *ve_config, bool force);
+
+/*
+ * vcmmd_deactivate_ve: deactivate VE
+ * @ve_name: VE name
+ *
+ * This function notifies VCMMD that an active VE must not be managed any
+ * longer. After this operation completes, VE still stays in the VCMMD list of
+ * registered VEs and hence contributes to the host load, but VCMMD is not
+ * allowed to tune its parameters at runtime. This function is supposed to be
+ * called before pausing a VE. To undo it, call vcmmd_activate_ve.
+ *
+ * Returns 0 on success, an error code on failure.
+ *
+ * Error codes:
+ *
+ *   %VCMMD_ERROR_VE_NOT_REGISTERED
+ *   %VCMMD_ERROR_VE_NOT_ACTIVE
+ */
+int vcmmd_deactivate_ve(const char *ve_name);
 
 /*
  * vcmmd_unregister_ve: unregister VE
