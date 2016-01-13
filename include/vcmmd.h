@@ -23,8 +23,6 @@ enum {
 	VCMMD_ERROR_VE_NAME_ALREADY_IN_USE,			/* 4 */
 	VCMMD_ERROR_VE_NOT_REGISTERED,				/* 5 */
 	VCMMD_ERROR_VE_ALREADY_ACTIVE,				/* 6 */
-	VCMMD_ERROR_VE_ALREADY_COMMITTED =
-		VCMMD_ERROR_VE_ALREADY_ACTIVE,
 	VCMMD_ERROR_VE_OPERATION_FAILED,			/* 7 */
 	VCMMD_ERROR_NO_SPACE,					/* 8 */
 	VCMMD_ERROR_VE_NOT_ACTIVE,				/* 9 */
@@ -179,9 +177,6 @@ int vcmmd_register_ve(const char *ve_name, vcmmd_ve_type_t ve_type,
  *   %VCMMD_ERROR_VE_OPERATION_FAILED
  */
 int vcmmd_activate_ve(const char *ve_name);
-
-/* Equivalent to vcmmd_activate_ve. Left for compatibility. */
-int vcmmd_commit_ve(const char *ve_name);
 
 /*
  * vcmmd_update_ve: update VE config

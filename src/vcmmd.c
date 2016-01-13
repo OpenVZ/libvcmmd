@@ -177,11 +177,6 @@ int vcmmd_activate_ve(const char *ve_name)
 	return send_msg(msg);
 }
 
-int vcmmd_commit_ve(const char *ve_name)
-{
-	return vcmmd_activate_ve(ve_name);
-}
-
 int vcmmd_update_ve(const char *ve_name,
 		    const struct vcmmd_ve_config *ve_config)
 {
