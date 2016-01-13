@@ -189,7 +189,7 @@ int vcmmd_commit_ve(const char *ve_name);
  * @ve_config: VE config
  *
  * This function requests the VCMMD service to update a VE's configuration. It
- * may be called for any registered VE, no matter active or not. This function
+ * may only be called on active VEs (see vcmmd_activate_ve). This function
  * may fail if VCMMD finds that it will not be able to meet the new VE's
  * requirements.
  *
@@ -199,6 +199,7 @@ int vcmmd_commit_ve(const char *ve_name);
  *
  *   %VCMMD_ERROR_INVALID_VE_CONFIG
  *   %VCMMD_ERROR_VE_NOT_REGISTERED
+ *   %VCMMD_ERROR_VE_NOT_ACTIVE
  *   %VCMMD_ERROR_VE_OPERATION_FAILED
  *   %VCMMD_ERROR_NO_SPACE
  */
