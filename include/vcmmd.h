@@ -139,7 +139,6 @@ char *vcmmd_strerror(int err, char *buf, size_t buflen);
  * @ve_name: VE name
  * @ve_type: VE type
  * @ve_config: VE config
- * @force: force VE registration
  *
  * This function tries to register a VE with the VCMMD service. It should be
  * called before VE start. VCMMD will check if it can meet the requirements
@@ -147,9 +146,6 @@ char *vcmmd_strerror(int err, char *buf, size_t buflen);
  * VE if VCMMD returns failure. If VCMMD finds that the VE requirements can be
  * met, it will remember the VE and return success, but it will not start
  * tuning the VE's parameters until the VE is activated (see vcmmd_activate_ve).
- *
- * The caller may set the @force flag in order to force VCMMD to register a VE
- * even if it cannot meet the VE's requirements.
  *
  * Returns 0 on success, an error code on failure.
  *
@@ -162,7 +158,7 @@ char *vcmmd_strerror(int err, char *buf, size_t buflen);
  *   %VCMMD_ERROR_NO_SPACE
  */
 int vcmmd_register_ve(const char *ve_name, vcmmd_ve_type_t ve_type,
-		      const struct vcmmd_ve_config *ve_config, bool force);
+		      const struct vcmmd_ve_config *ve_config);
 
 /*
  * vcmmd_activate_ve: activate VE
@@ -191,15 +187,11 @@ int vcmmd_commit_ve(const char *ve_name);
  * vcmmd_update_ve: update VE config
  * @ve_name: VE name
  * @ve_config: VE config
- * @force: force VE config update
  *
  * This function requests the VCMMD service to update a VE's configuration. It
  * may be called for any registered VE, no matter active or not. This function
  * may fail if VCMMD finds that it will not be able to meet the new VE's
  * requirements.
- *
- * The caller may set the @force flag in order to force VCMMD to update a VE
- * configuration even if it cannot meet the VE's requirements.
  *
  * Returns 0 on success, an error code on failure.
  *
@@ -211,7 +203,7 @@ int vcmmd_commit_ve(const char *ve_name);
  *   %VCMMD_ERROR_NO_SPACE
  */
 int vcmmd_update_ve(const char *ve_name,
-		    const struct vcmmd_ve_config *ve_config, bool force);
+		    const struct vcmmd_ve_config *ve_config);
 
 /*
  * vcmmd_deactivate_ve: deactivate VE
