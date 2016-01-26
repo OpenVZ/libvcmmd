@@ -7,6 +7,20 @@
 
 #include "vcmmd.h"
 
+bool vcmmd_ve_config_extract(const struct vcmmd_ve_config *config,
+			     vcmmd_ve_config_key_t key, uint64_t *value)
+{
+	int i;
+
+	for (i = 0; i < config->nr_entries; i++) {
+		if (config->entries[i].key == key) {
+			*value = config->entries[i].value;
+			return true;
+		}
+	}
+	return false;
+}
+
 char *vcmmd_strerror(int err, char *buf, size_t buflen)
 {
 	static const char *success = "Success";
@@ -116,22 +130,30 @@ static DBusMessage *make_msg(const char *method, DBusMessageIter *args)
 	return msg;
 }
 
-static int send_msg(DBusMessage *msg)
+static DBusMessage *__send_msg(DBusMessage *msg)
 {
 	DBusConnection *conn;
 	DBusMessage *reply;
-	int32_t ret;
 
 	conn = dbus_bus_get(DBUS_BUS_SYSTEM, NULL);
 	if (!conn) {
 		dbus_message_unref(msg);
-		return VCMMD_ERROR_CONNECTION_FAILED;
+		return NULL;
 	}
 
 	reply = dbus_connection_send_with_reply_and_block(conn, msg, -1, NULL);
-
 	dbus_message_unref(msg);
+	dbus_connection_flush(conn);
 
+	return reply;
+}
+
+static int send_msg(DBusMessage *msg)
+{
+	DBusMessage *reply;
+	int32_t ret;
+
+	reply = __send_msg(msg);
 	if (!reply)
 		return VCMMD_ERROR_CONNECTION_FAILED;
 
@@ -142,8 +164,6 @@ static int send_msg(DBusMessage *msg)
 	}
 
 	dbus_message_unref(reply);
-
-	dbus_connection_flush(conn);
 
 	return ret;
 }
@@ -216,4 +236,49 @@ int vcmmd_unregister_ve(const char *ve_name)
 		return VCMMD_ERROR_NO_MEMORY;
 
 	return send_msg(msg);
+}
+
+int vcmmd_get_ve_config(const char *ve_name, struct vcmmd_ve_config *ve_config)
+{
+	DBusMessage *msg, *reply;
+	DBusMessageIter args;
+	uint64_t *data;
+	int i, size;
+	int32_t ret;
+
+	msg = make_msg("GetVEConfig", &args);
+	if (!msg ||
+	    !append_str(&args, ve_name))
+		return VCMMD_ERROR_NO_MEMORY;
+
+	reply = __send_msg(msg);
+	if (!reply)
+		return VCMMD_ERROR_CONNECTION_FAILED;
+
+	if (!dbus_message_get_args(reply, NULL,
+				   DBUS_TYPE_INT32, &ret,
+				   DBUS_TYPE_ARRAY, DBUS_TYPE_UINT64,
+				   &data, &size,
+				   DBUS_TYPE_INVALID)) {
+		dbus_message_unref(reply);
+		return VCMMD_ERROR_CONNECTION_FAILED;
+	}
+
+	if (ret) {
+		dbus_message_unref(reply);
+		return ret;
+	}
+
+	/* Ignore uknown parameters */
+	if (size > __NR_VCMMD_VE_CONFIG_KEYS)
+		size = __NR_VCMMD_VE_CONFIG_KEYS;
+
+	vcmmd_ve_config_init(ve_config);
+	for (i = 0; i < size; i++)
+		vcmmd_ve_config_append(ve_config, i, data[i]);
+
+	/* Frees data */
+	dbus_message_unref(reply);
+
+	return 0;
 }

@@ -123,6 +123,17 @@ extern "C" {
 #endif
 
 /*
+ * vcmmd_ve_config_extract: extract value from config given a key
+ * @config: config
+ * @key: config key
+ * @value: pointer to buffer to write value to
+ *
+ * Returns %true if the key was found in the config, %false otherwise.
+ */
+bool vcmmd_ve_config_extract(const struct vcmmd_ve_config *config,
+			     vcmmd_ve_config_key_t key, uint64_t *value);
+
+/*
  * vcmmd_strerror: return string describing error code
  * @err: the error code
  * @buf: buffer to store the error string
@@ -234,6 +245,19 @@ int vcmmd_deactivate_ve(const char *ve_name);
  *   %VCMMD_ERROR_VE_NOT_REGISTERED
  */
 int vcmmd_unregister_ve(const char *ve_name);
+
+/*
+ * vcmmd_get_ve_config: get VE config
+ * @ve_name: VE name
+ * @ve_config: pointer to buffer to write config to
+ *
+ * Returns 0 on success, an error code on failure.
+ *
+ * Error codes:
+ *
+ *   %VCMMD_ERROR_VE_NOT_REGISTERED
+ */
+int vcmmd_get_ve_config(const char *ve_name, struct vcmmd_ve_config *ve_config);
 
 #ifdef __cplusplus
 }
