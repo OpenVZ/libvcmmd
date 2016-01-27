@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <dbus/dbus.h>
@@ -281,4 +282,10 @@ int vcmmd_get_ve_config(const char *ve_name, struct vcmmd_ve_config *ve_config)
 	dbus_message_unref(reply);
 
 	return 0;
+}
+
+void __attribute__ ((constructor)) vcmmd_init(void)
+{
+	if (!dbus_threads_init_default())
+		abort();
 }
