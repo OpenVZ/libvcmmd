@@ -30,12 +30,12 @@ char *vcmmd_strerror(int err, char *buf, size_t buflen)
 	static const char *service_err_list[] = {
 		"Invalid VE name",				/* 1 */
 		"Invalid VE type",				/* 2 */
-		"Conflicting VE config parameters",		/* 3 */
+		"Invalid VE configuration",			/* 3 */
 		"VE name already in use",			/* 4 */
 		"VE not registered",				/* 5 */
 		"VE already active",				/* 6 */
 		"VE operation failed",				/* 7 */
-		"Unable to meet VE requirements",		/* 8 */
+		"No space for VE",				/* 8 */
 		"VE not active",				/* 9 */
 	};
 
