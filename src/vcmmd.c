@@ -68,6 +68,11 @@ static bool append_str(DBusMessageIter *iter, const char *val)
 	return dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &val);
 }
 
+static bool append_int32(DBusMessageIter *iter, dbus_int32_t val)
+{
+	return dbus_message_iter_append_basic(iter, DBUS_TYPE_INT32, &val);
+}
+
 static bool append_uint16(DBusMessageIter *iter, dbus_uint16_t val)
 {
 	return dbus_message_iter_append_basic(iter, DBUS_TYPE_UINT16, &val);
@@ -178,7 +183,7 @@ int vcmmd_register_ve(const char *ve_name, vcmmd_ve_type_t ve_type,
 	msg = make_msg("RegisterVE", &args);
 	if (!msg ||
 	    !append_str(&args, ve_name) ||
-	    !append_uint16(&args, ve_type) ||
+	    !append_int32(&args, ve_type) ||
 	    !append_config(&args, ve_config))
 		return VCMMD_ERROR_NO_MEMORY;
 
