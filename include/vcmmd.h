@@ -51,6 +51,15 @@ typedef enum {
 } vcmmd_ve_type_t;
 
 /*
+ * VE state
+ */
+typedef enum {
+	VCMMD_VE_UNREGISTERED,		/* VE is unknown to VCMMD */
+	VCMMD_VE_REGISTERED,		/* VE is registered, but inactive */
+	VCMMD_VE_ACTIVE,		/* VE is registered and active */
+} vcmmd_ve_state_t;
+
+/*
  * VE config keys
  */
 typedef enum {
@@ -258,6 +267,14 @@ int vcmmd_unregister_ve(const char *ve_name);
  *   %VCMMD_ERROR_VE_NOT_REGISTERED
  */
 int vcmmd_get_ve_config(const char *ve_name, struct vcmmd_ve_config *ve_config);
+
+/*
+ * vcmmd_get_ve_state: get VE state
+ * @ve_name: VE name
+ *
+ * Returns 0 on success, an error code on failure.
+ */
+int vcmmd_get_ve_state(const char *ve_name, vcmmd_ve_state_t *ve_state);
 
 #ifdef __cplusplus
 }

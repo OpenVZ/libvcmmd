@@ -284,6 +284,47 @@ int vcmmd_get_ve_config(const char *ve_name, struct vcmmd_ve_config *ve_config)
 	return 0;
 }
 
+int vcmmd_get_ve_state(const char *ve_name, vcmmd_ve_state_t *ve_state)
+{
+	DBusMessage *msg, *reply;
+	DBusMessageIter args;
+	dbus_int32_t err;
+	dbus_bool_t active;
+
+	msg = make_msg("IsVEActive", &args);
+	if (!msg ||
+	    !append_str(&args, ve_name))
+		return VCMMD_ERROR_NO_MEMORY;
+
+	reply = __send_msg(msg);
+	if (!reply)
+		return VCMMD_ERROR_CONNECTION_FAILED;
+
+	if (!dbus_message_get_args(reply, NULL,
+				   DBUS_TYPE_INT32, &err,
+				   DBUS_TYPE_BOOLEAN, &active,
+				   DBUS_TYPE_INVALID)) {
+		dbus_message_unref(reply);
+		return VCMMD_ERROR_CONNECTION_FAILED;
+	}
+
+	dbus_message_unref(reply);
+
+	if (err) {
+		if (err == VCMMD_ERROR_VE_NOT_REGISTERED) {
+			*ve_state = VCMMD_VE_UNREGISTERED;
+			err = 0;
+		}
+		return err;
+	}
+
+	if (active)
+		*ve_state = VCMMD_VE_ACTIVE;
+	else
+		*ve_state = VCMMD_VE_REGISTERED;
+	return 0;
+}
+
 void __attribute__ ((constructor)) vcmmd_init(void)
 {
 	if (!dbus_threads_init_default())
