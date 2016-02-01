@@ -152,13 +152,13 @@ static DBusMessage *__send_msg(DBusMessage *msg)
 static int send_msg(DBusMessage *msg)
 {
 	DBusMessage *reply;
-	int32_t ret;
+	dbus_int32_t err;
 
 	reply = __send_msg(msg);
 	if (!reply)
 		return VCMMD_ERROR_CONNECTION_FAILED;
 
-	if (!dbus_message_get_args(reply, NULL, DBUS_TYPE_INT32, &ret,
+	if (!dbus_message_get_args(reply, NULL, DBUS_TYPE_INT32, &err,
 				   DBUS_TYPE_INVALID)) {
 		dbus_message_unref(reply);
 		return VCMMD_ERROR_CONNECTION_FAILED;
@@ -166,7 +166,7 @@ static int send_msg(DBusMessage *msg)
 
 	dbus_message_unref(reply);
 
-	return ret;
+	return err;
 }
 
 int vcmmd_register_ve(const char *ve_name, vcmmd_ve_type_t ve_type,
@@ -243,9 +243,9 @@ int vcmmd_get_ve_config(const char *ve_name, struct vcmmd_ve_config *ve_config)
 {
 	DBusMessage *msg, *reply;
 	DBusMessageIter args;
-	uint64_t *data;
+	dbus_int32_t err;
+	dbus_uint64_t *data;
 	int i, size;
-	int32_t ret;
 
 	msg = make_msg("GetVEConfig", &args);
 	if (!msg ||
@@ -257,7 +257,7 @@ int vcmmd_get_ve_config(const char *ve_name, struct vcmmd_ve_config *ve_config)
 		return VCMMD_ERROR_CONNECTION_FAILED;
 
 	if (!dbus_message_get_args(reply, NULL,
-				   DBUS_TYPE_INT32, &ret,
+				   DBUS_TYPE_INT32, &err,
 				   DBUS_TYPE_ARRAY, DBUS_TYPE_UINT64,
 				   &data, &size,
 				   DBUS_TYPE_INVALID)) {
@@ -265,9 +265,9 @@ int vcmmd_get_ve_config(const char *ve_name, struct vcmmd_ve_config *ve_config)
 		return VCMMD_ERROR_CONNECTION_FAILED;
 	}
 
-	if (ret) {
+	if (err) {
 		dbus_message_unref(reply);
-		return ret;
+		return err;
 	}
 
 	/* Ignore uknown parameters */
