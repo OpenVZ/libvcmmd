@@ -57,7 +57,7 @@ char *vcmmd_strerror(int err, char *buf, size_t buflen)
 		"VE not registered",				/* 5 */
 		"VE already active",				/* 6 */
 		"VE operation failed",				/* 7 */
-		"No space for VE",				/* 8 */
+		"Unable to apply VE guarantee",			/* 8 */
 		"VE not active",				/* 9 */
 	};
 

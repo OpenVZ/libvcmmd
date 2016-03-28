@@ -46,7 +46,7 @@ enum {
 	VCMMD_ERROR_VE_NOT_REGISTERED,				/* 5 */
 	VCMMD_ERROR_VE_ALREADY_ACTIVE,				/* 6 */
 	VCMMD_ERROR_VE_OPERATION_FAILED,			/* 7 */
-	VCMMD_ERROR_NO_SPACE,					/* 8 */
+	VCMMD_ERROR_UNABLE_APPLY_VE_GUARANTEE,			/* 8 */
 	VCMMD_ERROR_VE_NOT_ACTIVE,				/* 9 */
 
 	__VCMMD_SERVICE_ERROR_END,
@@ -195,7 +195,7 @@ char *vcmmd_strerror(int err, char *buf, size_t buflen);
  *   %VCMMD_ERROR_INVALID_VE_TYPE
  *   %VCMMD_ERROR_INVALID_VE_CONFIG
  *   %VCMMD_ERROR_VE_NAME_ALREADY_IN_USE
- *   %VCMMD_ERROR_NO_SPACE
+ *   %VCMMD_ERROR_UNABLE_APPLY_VE_GUARANTEE
  */
 int vcmmd_register_ve(const char *ve_name, vcmmd_ve_type_t ve_type,
 		      const struct vcmmd_ve_config *ve_config);
@@ -238,7 +238,7 @@ int vcmmd_activate_ve(const char *ve_name);
  *   %VCMMD_ERROR_VE_NOT_REGISTERED
  *   %VCMMD_ERROR_VE_NOT_ACTIVE
  *   %VCMMD_ERROR_VE_OPERATION_FAILED
- *   %VCMMD_ERROR_NO_SPACE
+ *   %VCMMD_ERROR_UNABLE_APPLY_VE_GUARANTEE
  */
 int vcmmd_update_ve(const char *ve_name,
 		    const struct vcmmd_ve_config *ve_config);
