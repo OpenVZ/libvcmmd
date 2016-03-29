@@ -198,7 +198,8 @@ char *vcmmd_strerror(int err, char *buf, size_t buflen);
  *   %VCMMD_ERROR_UNABLE_APPLY_VE_GUARANTEE
  */
 int vcmmd_register_ve(const char *ve_name, vcmmd_ve_type_t ve_type,
-		      const struct vcmmd_ve_config *ve_config);
+		      const struct vcmmd_ve_config *ve_config,
+		      unsigned int flags);
 
 /*
  * vcmmd_activate_ve: activate VE
@@ -218,7 +219,7 @@ int vcmmd_register_ve(const char *ve_name, vcmmd_ve_type_t ve_type,
  *   %VCMMD_ERROR_VE_ALREADY_ACTIVE
  *   %VCMMD_ERROR_VE_OPERATION_FAILED
  */
-int vcmmd_activate_ve(const char *ve_name);
+int vcmmd_activate_ve(const char *ve_name, unsigned int flags);
 
 /*
  * vcmmd_update_ve: update VE config
@@ -241,7 +242,8 @@ int vcmmd_activate_ve(const char *ve_name);
  *   %VCMMD_ERROR_UNABLE_APPLY_VE_GUARANTEE
  */
 int vcmmd_update_ve(const char *ve_name,
-		    const struct vcmmd_ve_config *ve_config);
+		    const struct vcmmd_ve_config *ve_config,
+		    unsigned int flags);
 
 /*
  * vcmmd_deactivate_ve: deactivate VE

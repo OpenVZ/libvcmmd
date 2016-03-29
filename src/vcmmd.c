@@ -100,6 +100,11 @@ static bool append_uint16(DBusMessageIter *iter, dbus_uint16_t val)
 	return dbus_message_iter_append_basic(iter, DBUS_TYPE_UINT16, &val);
 }
 
+static bool append_uint32(DBusMessageIter *iter, dbus_uint32_t val)
+{
+	return dbus_message_iter_append_basic(iter, DBUS_TYPE_UINT32, &val);
+}
+
 static bool append_uint64(DBusMessageIter *iter, dbus_uint64_t val)
 {
 	return dbus_message_iter_append_basic(iter, DBUS_TYPE_UINT64, &val);
@@ -197,7 +202,8 @@ static int send_msg(DBusMessage *msg)
 }
 
 int vcmmd_register_ve(const char *ve_name, vcmmd_ve_type_t ve_type,
-		      const struct vcmmd_ve_config *ve_config)
+		      const struct vcmmd_ve_config *ve_config,
+		      unsigned int flags)
 {
 	DBusMessage *msg;
 	DBusMessageIter args;
@@ -206,27 +212,30 @@ int vcmmd_register_ve(const char *ve_name, vcmmd_ve_type_t ve_type,
 	if (!msg ||
 	    !append_str(&args, ve_name) ||
 	    !append_int32(&args, ve_type) ||
-	    !append_config(&args, ve_config))
+	    !append_config(&args, ve_config) ||
+	    !append_uint32(&args, flags))
 		return VCMMD_ERROR_NO_MEMORY;
 
 	return send_msg(msg);
 }
 
-int vcmmd_activate_ve(const char *ve_name)
+int vcmmd_activate_ve(const char *ve_name, unsigned int flags)
 {
 	DBusMessage *msg;
 	DBusMessageIter args;
 
 	msg = make_msg("ActivateVE", &args);
 	if (!msg ||
-	    !append_str(&args, ve_name))
+	    !append_str(&args, ve_name) ||
+	    !append_uint32(&args, flags))
 		return VCMMD_ERROR_NO_MEMORY;
 
 	return send_msg(msg);
 }
 
 int vcmmd_update_ve(const char *ve_name,
-		    const struct vcmmd_ve_config *ve_config)
+		    const struct vcmmd_ve_config *ve_config,
+		    unsigned int flags)
 {
 	DBusMessage *msg;
 	DBusMessageIter args;
@@ -234,7 +243,8 @@ int vcmmd_update_ve(const char *ve_name,
 	msg = make_msg("UpdateVE", &args);
 	if (!msg ||
 	    !append_str(&args, ve_name) ||
-	    !append_config(&args, ve_config))
+	    !append_config(&args, ve_config) ||
+	    !append_uint32(&args, flags))
 		return VCMMD_ERROR_NO_MEMORY;
 
 	return send_msg(msg);
