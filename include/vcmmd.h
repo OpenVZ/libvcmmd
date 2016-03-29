@@ -109,6 +109,13 @@ typedef enum {
 	 */
 	VCMMD_VE_CONFIG_SWAP,
 
+	/*
+	 * Video RAM size, in bytes.
+	 *
+	 * Amount of memory that should be reserved for a VE's graphic card.
+	 */
+	VCMMD_VE_CONFIG_VRAM,
+
 	__NR_VCMMD_VE_CONFIG_KEYS,
 } vcmmd_ve_config_key_t;
 
