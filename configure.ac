@@ -1,4 +1,4 @@
-AC_INIT([libvcmmd], [7.0.10])
+AC_INIT([libvcmmd], [7.0.11])
 
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
