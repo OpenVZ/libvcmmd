@@ -68,8 +68,10 @@ enum {
  * VE type
  */
 typedef enum {
-	VCMMD_VE_CT,	/* container */
-	VCMMD_VE_VM,	/* virtual machine */
+	VCMMD_VE_CT,		/* container */
+	VCMMD_VE_VM,		/* virtual machine */
+	VCMMD_VE_VM_LINUX,	/* virtual machine Linux */
+	VCMMD_VE_VM_WINDOWS,	/* virtual machine Windows */
 } vcmmd_ve_type_t;
 
 /*
