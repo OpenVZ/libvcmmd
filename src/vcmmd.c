@@ -30,10 +30,39 @@
 
 #include "vcmmd.h"
 
+static inline bool vcmmd_ve_config_entry_is_string(
+		vcmmd_ve_config_key_t key)
+{
+	if (key == VCMMD_VE_CONFIG_NODE_LIST ||
+		key == VCMMD_VE_CONFIG_CPU_LIST)
+		return true;
+	return false;
+}
+
+bool vcmmd_ve_config_extract_string(const struct vcmmd_ve_config *config,
+			     vcmmd_ve_config_key_t key, const char **str)
+{
+	int i;
+
+	if (!vcmmd_ve_config_entry_is_string(key))
+		return false;
+
+	for (i = 0; i < config->nr_entries; i++) {
+		if (config->entries[i].key == key && config->entries[i].str) {
+			*str = config->entries[i].str;
+			return true;
+		}
+	}
+	return false;
+}
+
 bool vcmmd_ve_config_extract(const struct vcmmd_ve_config *config,
 			     vcmmd_ve_config_key_t key, uint64_t *value)
 {
 	int i;
+
+	if (vcmmd_ve_config_entry_is_string(key))
+		return false;
 
 	for (i = 0; i < config->nr_entries; i++) {
 		if (config->entries[i].key == key) {
@@ -42,6 +71,62 @@ bool vcmmd_ve_config_extract(const struct vcmmd_ve_config *config,
 		}
 	}
 	return false;
+}
+
+static bool vcmmd_ve_config_key_present(const struct vcmmd_ve_config *config,
+			     vcmmd_ve_config_key_t key)
+{
+	int i;
+	for (i = 0; i < config->nr_entries; i++) {
+		if (config->entries[i].key == key) {
+			return true;
+		}
+	}
+	return false;
+}
+
+static bool _vcmmd_ve_config_append(struct vcmmd_ve_config *config,
+					  vcmmd_ve_config_key_t key,
+					  uint64_t value,
+					  const char *str)
+{
+	if (vcmmd_ve_config_key_present(config, key) ||
+		config->nr_entries == __NR_VCMMD_VE_CONFIG_KEYS)
+		return false;
+
+	char *str_dup = strdup(str ? str : "");
+	if (!str_dup)
+		return false;
+
+	struct vcmmd_ve_config_entry entry = {
+		.key = key,
+		.value = value,
+		.str = str_dup,
+	};
+
+	config->entries[config->nr_entries++] = entry;
+	return true;
+}
+
+bool vcmmd_ve_config_append_string(struct vcmmd_ve_config *config,
+					  vcmmd_ve_config_key_t key,
+					  const char *str)
+{
+
+	if (!vcmmd_ve_config_entry_is_string(key))
+		return false;
+
+	return _vcmmd_ve_config_append(config, key, 0, str);
+}
+
+bool vcmmd_ve_config_append(struct vcmmd_ve_config *config,
+					  vcmmd_ve_config_key_t key,
+					  uint64_t value)
+{
+	if (vcmmd_ve_config_entry_is_string(key))
+		return false;
+
+	return _vcmmd_ve_config_append(config, key, value, NULL);
 }
 
 char *vcmmd_strerror(int err, char *buf, size_t buflen)

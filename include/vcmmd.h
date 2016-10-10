@@ -128,6 +128,7 @@ typedef enum {
 struct vcmmd_ve_config_entry {
 	vcmmd_ve_config_key_t key;
 	uint64_t value;
+	char *str;
 };
 
 /*
@@ -136,6 +137,7 @@ struct vcmmd_ve_config_entry {
  * Use vcmmd_ve_config_{init,append} helpers to build a config. If a value for
  * a particular config key is omitted, the current value will be used if any,
  * otherwise the default value.
+ * Use vcmmd_ve_config_deinit to free all memory held by config
  */
 struct vcmmd_ve_config {
 	unsigned int nr_entries;
@@ -147,16 +149,14 @@ static inline void vcmmd_ve_config_init(struct vcmmd_ve_config *config)
 	memset(config, 0, sizeof(*config));
 }
 
-static inline void vcmmd_ve_config_append(struct vcmmd_ve_config *config,
-					  vcmmd_ve_config_key_t key,
-					  uint64_t value)
+static inline void vcmmd_ve_config_deinit(struct vcmmd_ve_config *config)
 {
-	struct vcmmd_ve_config_entry entry = {
-		.key = key,
-		.value = value,
-	};
-
-	config->entries[config->nr_entries++] = entry;
+	int i;
+	for (i = 0; i < config->nr_entries; i++)
+		if (config->entries[i].str) {
+			free(config->entries[i].str);
+			config->entries[i].str = NULL;
+		}
 }
 
 #ifdef __cplusplus
@@ -169,10 +169,53 @@ extern "C" {
  * @key: config key
  * @value: pointer to buffer to write value to
  *
- * Returns %true if the key was found in the config, %false otherwise.
+ * Returns %true if the key was found in the config and it is not a string
+ * value, %false otherwise.
  */
 bool vcmmd_ve_config_extract(const struct vcmmd_ve_config *config,
 			     vcmmd_ve_config_key_t key, uint64_t *value);
+
+/*
+ * vcmmd_ve_config_extract_string: extract value from config given a key
+ * @config: config
+ * @key: config key
+ * @str: pointer to buffer to write value to
+ *
+ * Returned value is invalidated by vcmmd_ve_config_deinit and is shared between
+ * all vcmmd_ve_config_extract_string calls.
+ *
+ * Returns %true if the key was found in the config and it is a string value,
+ * %false otherwise.
+ */
+bool vcmmd_ve_config_extract_string(const struct vcmmd_ve_config *config,
+			     vcmmd_ve_config_key_t key, const char **str);
+
+/*
+ * vcmmd_ve_config_append: append value to config given a key
+ * @config: config
+ * @key: config key
+ * @value: pointer to buffer to write value to
+ *
+ * Returns %false if the key was found in the config or it is not a string
+ * value, %true otherwise. In the former case, the config remains modified.
+ */
+bool vcmmd_ve_config_append(struct vcmmd_ve_config *config,
+					  vcmmd_ve_config_key_t key,
+					  uint64_t value);
+
+/*
+ * vcmmd_ve_config_append_string: append value to config given a key
+ * @config: config
+ * @key: config key
+ * @str: pointer to buffer to write value to
+ * @len: size of the buffer to write value to
+ *
+ * Returns %false if the key was found in the config or it is a string value,
+ * %true otherwise. In the former case, the config remains modified.
+ */
+bool vcmmd_ve_config_append_string(struct vcmmd_ve_config *config,
+					  vcmmd_ve_config_key_t key,
+					  const char *str);
 
 /*
  * vcmmd_strerror: return string describing error code
