@@ -204,6 +204,7 @@ static bool append_config_entry(DBusMessageIter *iter,
 					      &sub) ||
 	    !append_uint16(&sub, entry->key) ||
 	    !append_uint64(&sub, entry->value) ||
+	    !append_str(&sub, entry->str) ||
 	    !dbus_message_iter_close_container(iter, &sub))
 		return false;
 
@@ -220,6 +221,7 @@ static bool append_config(DBusMessageIter *iter,
 					      DBUS_STRUCT_BEGIN_CHAR_AS_STRING
 					      DBUS_TYPE_UINT16_AS_STRING
 					      DBUS_TYPE_UINT64_AS_STRING
+						  DBUS_TYPE_STRING_AS_STRING
 					      DBUS_STRUCT_END_CHAR_AS_STRING,
 					      &sub))
 		return false;
@@ -364,10 +366,12 @@ int vcmmd_unregister_ve(const char *ve_name)
 int vcmmd_get_ve_config(const char *ve_name, struct vcmmd_ve_config *ve_config)
 {
 	DBusMessage *msg, *reply;
-	DBusMessageIter args;
+	DBusMessageIter args, array, structure;
 	dbus_int32_t err;
-	dbus_uint64_t *data;
-	int i, size;
+	dbus_uint16_t t;
+	vcmmd_ve_config_key_t tag;
+	dbus_uint64_t value;
+	char *string;
 
 	msg = make_msg("GetVEConfig", &args);
 	if (!msg ||
@@ -378,32 +382,58 @@ int vcmmd_get_ve_config(const char *ve_name, struct vcmmd_ve_config *ve_config)
 	if (!reply)
 		return VCMMD_ERROR_CONNECTION_FAILED;
 
-	if (!dbus_message_get_args(reply, NULL,
-				   DBUS_TYPE_INT32, &err,
-				   DBUS_TYPE_ARRAY, DBUS_TYPE_UINT64,
-				   &data, &size,
-				   DBUS_TYPE_INVALID)) {
-		dbus_message_unref(reply);
-		return VCMMD_ERROR_CONNECTION_FAILED;
-	}
-
-	if (err) {
-		dbus_message_unref(reply);
-		return err;
-	}
-
-	/* Ignore uknown parameters */
-	if (size > __NR_VCMMD_VE_CONFIG_KEYS)
-		size = __NR_VCMMD_VE_CONFIG_KEYS;
-
 	vcmmd_ve_config_init(ve_config);
-	for (i = 0; i < size; i++)
-		vcmmd_ve_config_append(ve_config, i, data[i]);
+
+	dbus_message_iter_init(reply, &args);
+	if (DBUS_TYPE_INT32 != dbus_message_iter_get_arg_type(&args))
+		goto error;
+
+	dbus_message_iter_get_basic(&args, &err);
+	if (err)
+		goto error;
+
+	if (FALSE == dbus_message_iter_next(&args) ||
+			DBUS_TYPE_ARRAY != dbus_message_iter_get_arg_type(&args))
+		goto error;
+	dbus_message_iter_recurse(&args, &array);
+
+	do {
+		if (DBUS_TYPE_STRUCT != dbus_message_iter_get_arg_type(&array))
+			goto error;
+		dbus_message_iter_recurse(&array, &structure);
+		if (DBUS_TYPE_UINT16 != dbus_message_iter_get_arg_type(&structure))
+			goto error;
+		dbus_message_iter_get_basic(&structure, &t);
+		tag = (vcmmd_ve_config_key_t)t;
+		if (FALSE == dbus_message_iter_next(&structure) ||
+				DBUS_TYPE_UINT64 != dbus_message_iter_get_arg_type(&structure))
+			goto error;
+		dbus_message_iter_get_basic(&structure, &value);
+		if (FALSE == dbus_message_iter_next(&structure) ||
+				DBUS_TYPE_STRING != dbus_message_iter_get_arg_type(&structure))
+			goto error;
+		dbus_message_iter_get_basic(&structure, &string);
+
+		if (vcmmd_ve_config_entry_is_string(tag)) {
+			if (!vcmmd_ve_config_append_string(ve_config, tag, string))
+				goto error;
+		}
+		else {
+			if (!vcmmd_ve_config_append(ve_config, tag, value))
+				goto error;
+		}
+	} while (TRUE == dbus_message_iter_next(&array));
+
 
 	/* Frees data */
 	dbus_message_unref(reply);
 
 	return 0;
+
+error:
+	dbus_message_unref(reply);
+	vcmmd_ve_config_deinit(ve_config);
+	return VCMMD_ERROR_CONNECTION_FAILED;
 }
 
 int vcmmd_get_ve_state(const char *ve_name, vcmmd_ve_state_t *ve_state)
