@@ -119,6 +119,22 @@ typedef enum {
 	 */
 	VCMMD_VE_CONFIG_VRAM,
 
+	/*
+	 * NUMA node list, bitmask.
+	 *
+	 * Bitmask of NUMA nodes on the physical server to use for
+	 * executing the virtual environment process.
+	 */
+	VCMMD_VE_CONFIG_NODE_LIST,
+
+	/*
+	 * CPU list, bitmask.
+	 *
+	 * Bitmask of CPUs on the physical server to use for executing
+	 * the virtual environment process.
+	 */
+	VCMMD_VE_CONFIG_CPU_LIST,
+
 	__NR_VCMMD_VE_CONFIG_KEYS,
 } vcmmd_ve_config_key_t;
 
