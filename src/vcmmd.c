@@ -144,6 +144,7 @@ char *vcmmd_strerror(int err, char *buf, size_t buflen)
 		"VE operation failed",				/* 7 */
 		"Unable to apply VE guarantee",			/* 8 */
 		"VE not active",				/* 9 */
+		"Too many requests",				/* 10 */
 	};
 
 	static const char *lib_err_list[] = {
