@@ -136,8 +136,19 @@ typedef enum {
 	 */
 	VCMMD_VE_CONFIG_CPU_LIST,
 
+	/*
+	 * Default ve memory guarantee type "auto" or in percent.
+	 */
+	VCMMD_VE_CONFIG_GUARANTEE_TYPE,
+
 	__NR_VCMMD_VE_CONFIG_KEYS,
 } vcmmd_ve_config_key_t;
+
+typedef enum _VCMMD_MEMGUARANTEE_TYPE
+{
+        VCMMD_MEMGUARANTEE_AUTO = 0,
+        VCMMD_MEMGUARANTEE_PERCENTS = 1,
+} VCMMD_MEMGUARANTEE_TYPE;
 
 /*
  * VE config key-value pair
