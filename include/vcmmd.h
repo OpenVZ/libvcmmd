@@ -381,6 +381,15 @@ int vcmmd_get_ve_config(const char *ve_name, struct vcmmd_ve_config *ve_config);
  */
 int vcmmd_get_ve_state(const char *ve_name, vcmmd_ve_state_t *ve_state);
 
+/*
+ * vcmmd_get_current_policy: get current policy vcmmd uses
+ * @policy_name: buffer for policy name
+ * @len: length of that buffer
+ *
+ * Returns 0 on success, an error code on failure.
+ */
+int vcmmd_get_current_policy(char *policy_name, int len);
+
 #ifdef __cplusplus
 }
 #endif
