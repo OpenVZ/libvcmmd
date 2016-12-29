@@ -49,6 +49,8 @@ enum {
 	VCMMD_ERROR_UNABLE_APPLY_VE_GUARANTEE,			/* 8 */
 	VCMMD_ERROR_VE_NOT_ACTIVE,				/* 9 */
 	VCMMD_ERROR_TOO_MANY_REQUESTS,				/* 10 */
+	VCMMD_ERROR_POLICY_SET_ACTIVE_VES,                      /* 11 */
+	VCMMD_ERROR_POLICY_SET_INVALID_NAME,                    /* 12 */
 
 	__VCMMD_SERVICE_ERROR_END,
 
@@ -389,6 +391,14 @@ int vcmmd_get_ve_state(const char *ve_name, vcmmd_ve_state_t *ve_state);
  * Returns 0 on success, an error code on failure.
  */
 int vcmmd_get_current_policy(char *policy_name, int len);
+
+/*
+ * vcmmd_set_policy: set policy vcmmd uses
+ * @policy_name: new policy name
+ *
+ * Returns 0 on success, an error code on failure.
+ */
+int vcmmd_set_policy(const char *policy_name);
 
 #ifdef __cplusplus
 }

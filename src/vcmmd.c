@@ -508,6 +508,19 @@ int vcmmd_get_current_policy(char *policy_name, int len)
 	return 0;
 }
 
+int vcmmd_set_policy(const char *policy_name)
+{
+	DBusMessage *msg;
+	DBusMessageIter args;
+
+	msg = make_msg("SwitchPolicy", &args);
+	if (!msg ||
+	    !append_str(&args, policy_name))
+		return VCMMD_ERROR_NO_MEMORY;
+
+	return send_msg(msg);
+}
+
 void __attribute__ ((constructor)) vcmmd_init(void)
 {
 	if (!dbus_threads_init_default())
