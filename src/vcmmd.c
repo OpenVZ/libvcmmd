@@ -508,6 +508,36 @@ int vcmmd_get_current_policy(char *policy_name, int len)
 	return 0;
 }
 
+int vcmmd_get_policy_from_file(char *policy_name, int len)
+{
+	DBusMessage *msg, *reply;
+	char *ret;
+
+	msg = make_msg("GetPolicyFromFile", NULL);
+	if (!msg)
+		return VCMMD_ERROR_NO_MEMORY;
+
+	reply = __send_msg(msg);
+	if (!reply)
+		return VCMMD_ERROR_CONNECTION_FAILED;
+
+	if (!dbus_message_get_args(reply, NULL,
+				   DBUS_TYPE_STRING, &ret,
+				   DBUS_TYPE_INVALID)) {
+		dbus_message_unref(reply);
+		return VCMMD_ERROR_CONNECTION_FAILED;
+	}
+
+	if (strlen(ret) > len - 1) {
+		dbus_message_unref(reply);
+		return VCMMD_ERROR_NO_MEMORY;
+	}
+
+	strcpy(policy_name, ret);
+	dbus_message_unref(reply);
+	return 0;
+}
+
 int vcmmd_set_policy(const char *policy_name)
 {
 	DBusMessage *msg;
