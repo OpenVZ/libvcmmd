@@ -263,7 +263,7 @@ static DBusMessage *__send_msg(DBusMessage *msg)
 		return NULL;
 	}
 
-	reply = dbus_connection_send_with_reply_and_block(conn, msg, -1, NULL);
+	reply = dbus_connection_send_with_reply_and_block(conn, msg, DBUS_TIMEOUT_INFINITE, NULL);
 	dbus_message_unref(msg);
 	dbus_connection_flush(conn);
 
