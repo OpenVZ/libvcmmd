@@ -254,18 +254,30 @@ static DBusMessage *make_msg(const char *method, DBusMessageIter *args)
 
 static DBusMessage *__send_msg(DBusMessage *msg)
 {
-	DBusConnection *conn;
+	static DBusConnection *conn = NULL;
 	DBusMessage *reply;
 
-	conn = dbus_bus_get(DBUS_BUS_SYSTEM, NULL);
-	if (!conn) {
-		dbus_message_unref(msg);
-		return NULL;
-	}
+	int tries_num = 5;
+	do {
+		if (!conn) {
+			conn = dbus_bus_get_private(DBUS_BUS_SYSTEM, NULL);
+			if (!conn) {
+				dbus_message_unref(msg);
+				return NULL;
+			}
+		}
+		reply = dbus_connection_send_with_reply_and_block(conn, msg, DBUS_TIMEOUT_INFINITE, NULL);
+		if (!reply) {
+			dbus_connection_close(conn);
+			dbus_connection_unref(conn);
+			conn = NULL;
+		}
+	} while (tries_num-- > 0);
 
-	reply = dbus_connection_send_with_reply_and_block(conn, msg, DBUS_TIMEOUT_INFINITE, NULL);
 	dbus_message_unref(msg);
-	dbus_connection_flush(conn);
+	if (conn) {
+		dbus_connection_flush(conn);
+	}
 
 	return reply;
 }
