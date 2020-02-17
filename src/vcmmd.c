@@ -255,15 +255,14 @@ static DBusMessage *make_msg(const char *method, DBusMessageIter *args)
 static DBusMessage *__send_msg(DBusMessage *msg)
 {
 	static DBusConnection *conn = NULL;
-	DBusMessage *reply;
+	DBusMessage *reply = NULL;
 
 	int tries_num = 5;
 	do {
 		if (!conn) {
 			conn = dbus_bus_get_private(DBUS_BUS_SYSTEM, NULL);
 			if (!conn) {
-				dbus_message_unref(msg);
-				return NULL;
+				continue;
 			}
 		}
 		reply = dbus_connection_send_with_reply_and_block(conn, msg, DBUS_TIMEOUT_INFINITE, NULL);
@@ -272,7 +271,7 @@ static DBusMessage *__send_msg(DBusMessage *msg)
 			dbus_connection_unref(conn);
 			conn = NULL;
 		}
-	} while (tries_num-- > 0);
+	} while (!reply && tries_num-- > 0);
 
 	dbus_message_unref(msg);
 	if (conn) {
