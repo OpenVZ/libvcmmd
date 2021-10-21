@@ -398,12 +398,16 @@ int vcmmd_get_ve_config(const char *ve_name, struct vcmmd_ve_config *ve_config)
 	vcmmd_ve_config_init(ve_config);
 
 	dbus_message_iter_init(reply, &args);
-	if (DBUS_TYPE_INT32 != dbus_message_iter_get_arg_type(&args))
+	if (DBUS_TYPE_INT32 != dbus_message_iter_get_arg_type(&args)) {
+		err = VCMMD_ERROR_INVALID_VE_CONFIG;
 		goto error;
+	}
 
 	dbus_message_iter_get_basic(&args, &err);
 	if (err)
 		goto error;
+
+	err = VCMMD_ERROR_INVALID_VE_CONFIG;
 
 	if (FALSE == dbus_message_iter_next(&args) ||
 			DBUS_TYPE_ARRAY != dbus_message_iter_get_arg_type(&args))
@@ -446,7 +450,7 @@ int vcmmd_get_ve_config(const char *ve_name, struct vcmmd_ve_config *ve_config)
 error:
 	dbus_message_unref(reply);
 	vcmmd_ve_config_deinit(ve_config);
-	return VCMMD_ERROR_CONNECTION_FAILED;
+	return (int) err;
 }
 
 int vcmmd_get_ve_state(const char *ve_name, vcmmd_ve_state_t *ve_state)

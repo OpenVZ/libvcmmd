@@ -373,6 +373,7 @@ int vcmmd_unregister_ve(const char *ve_name);
  * Error codes:
  *
  *   %VCMMD_ERROR_VE_NOT_REGISTERED
+ *   %VCMMD_ERROR_INVALID_VE_CONFIG
  */
 int vcmmd_get_ve_config(const char *ve_name, struct vcmmd_ve_config *ve_config);
 
