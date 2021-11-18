@@ -144,6 +144,20 @@ typedef enum {
 	 */
 	VCMMD_VE_CONFIG_GUARANTEE_TYPE,
 
+	/*
+	 * Page cache limit in bytes for a VE.
+	 */
+	VCMMD_VE_CONFIG_CACHE,
+
+	/*
+	 * Number of vCPUs reserved for a VE.
+	 *
+	 * Usually this option is provided via libvirt interface.  But some
+	 * components might require to provide it manually via "vcmmdctl",
+	 * that's why we provide an alternative.
+	 */
+	VCMMD_VE_CONFIG_CPUNUM,
+
 	__NR_VCMMD_VE_CONFIG_KEYS,
 } vcmmd_ve_config_key_t;
 
