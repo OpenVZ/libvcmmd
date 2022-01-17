@@ -31,6 +31,8 @@
 
 #include "vcmmd.h"
 
+#define VCMMD_BUSNAME_MAXLEN	128
+
 static inline bool vcmmd_ve_config_entry_is_string(
 		vcmmd_ve_config_key_t key)
 {
@@ -238,20 +240,6 @@ static bool append_config(DBusMessageIter *iter,
 	return true;
 }
 
-static DBusMessage *make_msg(const char *method, DBusMessageIter *args)
-{
-	DBusMessage *msg;
-
-	msg = dbus_message_new_method_call("com.virtuozzo.vcmmd",
-					   "/LoadManager",
-					   "com.virtuozzo.vcmmd.LoadManager",
-					   method);
-	if (msg && args)
-		dbus_message_iter_init_append(msg, args);
-
-	return msg;
-}
-
 static DBusMessage *__send_msg(DBusMessage *msg)
 {
 	static DBusConnection *conn = NULL;
@@ -279,6 +267,85 @@ static DBusMessage *__send_msg(DBusMessage *msg)
 	}
 
 	return reply;
+}
+
+static int get_dbus_name(char * const bus_name)
+{
+	DBusMessage *msg, *reply;
+	DBusMessageIter reply_args, array;
+	char *str;
+	int err;
+
+	msg = NULL;
+	reply = NULL;
+	err = 0;
+
+	msg = dbus_message_new_method_call("org.freedesktop.DBus", "/DBus",
+	                                   "org.freedesktop.DBus", "ListNames");
+	if (!msg) {
+		err = VCMMD_ERROR_NO_MEMORY;
+		goto error;
+	}
+
+	reply = __send_msg(msg);
+	if (!reply) {
+		err = VCMMD_ERROR_CONNECTION_FAILED;
+		goto error;
+	}
+
+	if (!dbus_message_iter_init(reply, &reply_args) ||
+			dbus_message_iter_get_arg_type(&reply_args) != DBUS_TYPE_ARRAY) {
+		/* Since we can't find bus name, we can't connect as well. */
+		err = VCMMD_ERROR_CONNECTION_FAILED;
+		goto error;
+	}
+
+	dbus_message_iter_recurse(&reply_args, &array);
+	do {
+		str = NULL;
+		dbus_message_iter_get_basic(&array, &str);
+		if (str && strnlen(str, VCMMD_BUSNAME_MAXLEN) > 0 &&
+				strstr(str, ".vcmmd")) {
+			strncpy(bus_name, str, VCMMD_BUSNAME_MAXLEN - 1);
+			bus_name[VCMMD_BUSNAME_MAXLEN - 1] = '\0';
+			break;
+		}
+	} while (dbus_message_iter_next(&array));
+
+	if (!*bus_name) {
+		/* We've looked through and still couldn't find the bus name. */
+		err = VCMMD_ERROR_CONNECTION_FAILED;
+		goto error;
+	}
+
+error:
+	if (reply)
+		dbus_message_unref(reply);
+	return err;
+}
+
+static DBusMessage *make_msg(const char *method, DBusMessageIter *args)
+{
+	static char bus_name[VCMMD_BUSNAME_MAXLEN] = {0};
+	static char iface_name[VCMMD_BUSNAME_MAXLEN + sizeof(".LoadManager")] = {0};
+
+	DBusMessage *msg;
+	int err;
+
+	if (!*bus_name) {
+		/* Initialize bus name dynamically */
+		if ((err = get_dbus_name(bus_name)) || !*bus_name)
+			return NULL;
+	}
+	strncpy(iface_name, bus_name, VCMMD_BUSNAME_MAXLEN);
+	strcat(iface_name, ".LoadManager");
+
+	msg = dbus_message_new_method_call(bus_name, "/LoadManager",
+	                                   iface_name, method);
+	if (msg && args)
+		dbus_message_iter_init_append(msg, args);
+
+	return msg;
 }
 
 static int send_msg(DBusMessage *msg)
