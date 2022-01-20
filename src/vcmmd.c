@@ -164,6 +164,7 @@ char *vcmmd_strerror(int err, char *buf, size_t buflen)
 	static const char *lib_err_list[] = {
 		"Failed to allocate memory",			/* 1000 */
 		"Failed to connect to VCMMD service",		/* 1001 */
+		"Failed to get VCMMD D-Bus name",		/* 1002 */
 	};
 
 	const char *err_str;
@@ -315,14 +316,13 @@ static int get_vcmmd_bus_name(void)
 
 	reply = __send_msg(msg);
 	if (!reply) {
-		err = VCMMD_ERROR_CONNECTION_FAILED;
+		err = VCMMD_ERROR_BUSNAME_FETCH_FAILED;
 		goto error;
 	}
 
 	if (!dbus_message_iter_init(reply, &reply_args) ||
 			dbus_message_iter_get_arg_type(&reply_args) != DBUS_TYPE_ARRAY) {
-		/* Since we can't find bus name, we can't connect as well. */
-		err = VCMMD_ERROR_CONNECTION_FAILED;
+		err = VCMMD_ERROR_BUSNAME_FETCH_FAILED;
 		goto error;
 	}
 
@@ -339,7 +339,7 @@ static int get_vcmmd_bus_name(void)
 
 	if (!*vcmmd_bus_name) {
 		/* We've looked through and still couldn't find the bus name. */
-		err = VCMMD_ERROR_CONNECTION_FAILED;
+		err = VCMMD_ERROR_BUSNAME_FETCH_FAILED;
 		goto error;
 	}
 
