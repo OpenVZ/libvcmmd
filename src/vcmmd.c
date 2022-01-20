@@ -33,6 +33,17 @@
 
 #define VCMMD_BUSNAME_MAXLEN	128
 
+static char vcmmd_bus_name[VCMMD_BUSNAME_MAXLEN] = {0};
+static char vcmmd_iface_name[VCMMD_BUSNAME_MAXLEN + sizeof(".LoadManager")] = {0};
+
+#define VCMMD_FETCH_BUSNAME do { \
+	int err = get_vcmmd_bus_name(); \
+	if (err || !*vcmmd_bus_name) \
+		return err; \
+	if (!*vcmmd_iface_name) \
+		get_vcmmd_iface_name(); \
+} while(0)
+
 static inline bool vcmmd_ve_config_entry_is_string(
 		vcmmd_ve_config_key_t key)
 {
@@ -240,6 +251,18 @@ static bool append_config(DBusMessageIter *iter,
 	return true;
 }
 
+static DBusMessage *make_msg(const char *method, DBusMessageIter *args)
+{
+	DBusMessage *msg;
+
+	msg = dbus_message_new_method_call(vcmmd_bus_name, "/LoadManager",
+	                                   vcmmd_iface_name, method);
+	if (msg && args)
+		dbus_message_iter_init_append(msg, args);
+
+	return msg;
+}
+
 static DBusMessage *__send_msg(DBusMessage *msg)
 {
 	static DBusConnection *conn = NULL;
@@ -269,12 +292,15 @@ static DBusMessage *__send_msg(DBusMessage *msg)
 	return reply;
 }
 
-static int get_dbus_name(char * const bus_name)
+static int get_vcmmd_bus_name(void)
 {
 	DBusMessage *msg, *reply;
 	DBusMessageIter reply_args, array;
 	char *str;
 	int err;
+
+	if (*vcmmd_bus_name)
+		return 0;
 
 	msg = NULL;
 	reply = NULL;
@@ -306,13 +332,12 @@ static int get_dbus_name(char * const bus_name)
 		dbus_message_iter_get_basic(&array, &str);
 		if (str && strnlen(str, VCMMD_BUSNAME_MAXLEN) > 0 &&
 				strstr(str, ".vcmmd")) {
-			strncpy(bus_name, str, VCMMD_BUSNAME_MAXLEN - 1);
-			bus_name[VCMMD_BUSNAME_MAXLEN - 1] = '\0';
+			strncpy(vcmmd_bus_name, str, VCMMD_BUSNAME_MAXLEN - 1);
 			break;
 		}
 	} while (dbus_message_iter_next(&array));
 
-	if (!*bus_name) {
+	if (!*vcmmd_bus_name) {
 		/* We've looked through and still couldn't find the bus name. */
 		err = VCMMD_ERROR_CONNECTION_FAILED;
 		goto error;
@@ -324,28 +349,13 @@ error:
 	return err;
 }
 
-static DBusMessage *make_msg(const char *method, DBusMessageIter *args)
+static void get_vcmmd_iface_name(void)
 {
-	static char bus_name[VCMMD_BUSNAME_MAXLEN] = {0};
-	static char iface_name[VCMMD_BUSNAME_MAXLEN + sizeof(".LoadManager")] = {0};
+	if (!*vcmmd_bus_name)
+		return;
 
-	DBusMessage *msg;
-	int err;
-
-	if (!*bus_name) {
-		/* Initialize bus name dynamically */
-		if ((err = get_dbus_name(bus_name)) || !*bus_name)
-			return NULL;
-	}
-	strncpy(iface_name, bus_name, VCMMD_BUSNAME_MAXLEN);
-	strcat(iface_name, ".LoadManager");
-
-	msg = dbus_message_new_method_call(bus_name, "/LoadManager",
-	                                   iface_name, method);
-	if (msg && args)
-		dbus_message_iter_init_append(msg, args);
-
-	return msg;
+	strncpy(vcmmd_iface_name, vcmmd_bus_name, VCMMD_BUSNAME_MAXLEN - 1);
+	strcat(vcmmd_iface_name, ".LoadManager");
 }
 
 static int send_msg(DBusMessage *msg)
@@ -375,6 +385,8 @@ int vcmmd_register_ve(const char *ve_name, vcmmd_ve_type_t ve_type,
 	DBusMessage *msg;
 	DBusMessageIter args;
 
+	VCMMD_FETCH_BUSNAME;
+
 	msg = make_msg("RegisterVE", &args);
 	if (!msg ||
 	    !append_str(&args, ve_name) ||
@@ -390,6 +402,8 @@ int vcmmd_activate_ve(const char *ve_name, unsigned int flags)
 {
 	DBusMessage *msg;
 	DBusMessageIter args;
+
+	VCMMD_FETCH_BUSNAME;
 
 	msg = make_msg("ActivateVE", &args);
 	if (!msg ||
@@ -407,6 +421,8 @@ int vcmmd_update_ve(const char *ve_name,
 	DBusMessage *msg;
 	DBusMessageIter args;
 
+	VCMMD_FETCH_BUSNAME;
+
 	msg = make_msg("UpdateVE", &args);
 	if (!msg ||
 	    !append_str(&args, ve_name) ||
@@ -422,6 +438,8 @@ int vcmmd_deactivate_ve(const char *ve_name)
 	DBusMessage *msg;
 	DBusMessageIter args;
 
+	VCMMD_FETCH_BUSNAME;
+
 	msg = make_msg("DeactivateVE", &args);
 	if (!msg ||
 	    !append_str(&args, ve_name))
@@ -434,6 +452,8 @@ int vcmmd_unregister_ve(const char *ve_name)
 {
 	DBusMessage *msg;
 	DBusMessageIter args;
+
+	VCMMD_FETCH_BUSNAME;
 
 	msg = make_msg("UnregisterVE", &args);
 	if (!msg ||
@@ -452,6 +472,8 @@ int vcmmd_get_ve_config(const char *ve_name, struct vcmmd_ve_config *ve_config)
 	vcmmd_ve_config_key_t tag;
 	dbus_uint64_t value;
 	char *string;
+
+	VCMMD_FETCH_BUSNAME;
 
 	msg = make_msg("GetVEConfig", &args);
 	if (!msg ||
@@ -527,6 +549,8 @@ int vcmmd_get_ve_state(const char *ve_name, vcmmd_ve_state_t *ve_state)
 	dbus_int32_t err;
 	dbus_bool_t active;
 
+	VCMMD_FETCH_BUSNAME;
+
 	msg = make_msg("IsVEActive", &args);
 	if (!msg ||
 	    !append_str(&args, ve_name))
@@ -566,6 +590,8 @@ int vcmmd_get_current_policy(char *policy_name, int len)
 	DBusMessage *msg, *reply;
 	char *ret;
 
+	VCMMD_FETCH_BUSNAME;
+
 	msg = make_msg("GetCurrentPolicy", NULL);
 	if (!msg)
 		return VCMMD_ERROR_NO_MEMORY;
@@ -596,6 +622,8 @@ int vcmmd_get_policy_from_file(char *policy_name, int len)
 	DBusMessage *msg, *reply;
 	char *ret;
 
+	VCMMD_FETCH_BUSNAME;
+
 	msg = make_msg("GetPolicyFromFile", NULL);
 	if (!msg)
 		return VCMMD_ERROR_NO_MEMORY;
@@ -625,6 +653,8 @@ int vcmmd_set_policy(const char *policy_name)
 {
 	DBusMessage *msg;
 	DBusMessageIter args;
+
+	VCMMD_FETCH_BUSNAME;
 
 	msg = make_msg("SwitchPolicy", &args);
 	if (!msg ||
