@@ -354,7 +354,7 @@ static void get_vcmmd_iface_name(void)
 	if (!*vcmmd_bus_name)
 		return;
 
-	strncpy(vcmmd_iface_name, vcmmd_bus_name, VCMMD_BUSNAME_MAXLEN - 1);
+	strcpy(vcmmd_iface_name, vcmmd_bus_name);
 	strcat(vcmmd_iface_name, ".LoadManager");
 }
 
