@@ -503,6 +503,12 @@ int vcmmd_get_ve_config(const char *ve_name, struct vcmmd_ve_config *ve_config)
 		goto error;
 	dbus_message_iter_recurse(&args, &array);
 
+	if (dbus_message_iter_get_element_count(&args) == 0) {
+		/* We treat empty config (i.e. empty D-Bus array) as valid. */
+		dbus_message_unref(reply);
+		return 0;
+	}
+
 	do {
 		if (DBUS_TYPE_STRUCT != dbus_message_iter_get_arg_type(&array))
 			goto error;
