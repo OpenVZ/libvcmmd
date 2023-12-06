@@ -26,6 +26,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 
 #include <dbus/dbus.h>
 
@@ -267,28 +268,38 @@ static DBusMessage *make_msg(const char *method, DBusMessageIter *args)
 static DBusMessage *__send_msg(DBusMessage *msg)
 {
 	static DBusConnection *conn = NULL;
+	static pthread_mutex_t conn_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 	DBusMessage *reply = NULL;
 
 	int tries_num = 5;
 	do {
+		pthread_mutex_lock(&conn_mutex);
 		if (!conn) {
 			conn = dbus_bus_get_private(DBUS_BUS_SYSTEM, NULL);
 			if (!conn) {
 				continue;
 			}
 		}
+		pthread_mutex_unlock(&conn_mutex);
+
 		reply = dbus_connection_send_with_reply_and_block(conn, msg, DBUS_TIMEOUT_INFINITE, NULL);
 		if (!reply) {
+			pthread_mutex_lock(&conn_mutex);
 			dbus_connection_close(conn);
 			dbus_connection_unref(conn);
 			conn = NULL;
+			pthread_mutex_unlock(&conn_mutex);
 		}
 	} while (!reply && tries_num-- > 0);
 
 	dbus_message_unref(msg);
+
+	pthread_mutex_lock(&conn_mutex);
 	if (conn) {
 		dbus_connection_flush(conn);
 	}
+	pthread_mutex_unlock(&conn_mutex);
 
 	return reply;
 }
